@@ -6,7 +6,7 @@ TARGET          = tibero_xml
 all: $(OBJS)
 	$(CC) -o $(TARGET) $(OBJS) $(LIBS)
 
-$(OBJS):
+$(OBJS): $(SRCS)
 	$(CC) -c $(SRCS)
 
 clean:
