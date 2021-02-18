@@ -3,6 +3,11 @@
 #include <expat.h>
 #include "parse_xml.h"
 
+#define FOUR_GIBIBYTE 4294967296   //  4 GiB
+#define TIBERO6_XMLTYPE_MAXSIZE   FOUR_GIBIBYTE   // 4 GiB
+#define BUFFSIZE   FOUR_GIBIBYTE
+
+
 /* Keep track of the current level in the XML tree */
 static int         depth = 0;
 
@@ -14,6 +19,7 @@ size_t parse_xml(const char *filename) {
   char           *xmltext;
   XML_Parser      parser;
 
+  xmltext=malloc(BUFFSIZE);
 
   parser = XML_ParserCreate(NULL);
   if (parser == NULL) {
@@ -25,10 +31,9 @@ size_t parse_xml(const char *filename) {
    * the start or end of an element. */
   XML_SetElementHandler(parser, start, end);
   f = fopen(filename, "r");
-  xmltext = malloc(MAXCHARS);
 
   /* Slurp the XML file in the buffer xmltext */
-  size = fread(xmltext, sizeof(char), MAXCHARS, f);
+  size = fread(xmltext, sizeof(char), BUFFSIZE, f);
   if (XML_Parse(parser, xmltext, strlen(xmltext), XML_TRUE) ==
       XML_STATUS_ERROR) {
     fprintf(stderr,
@@ -39,6 +44,8 @@ size_t parse_xml(const char *filename) {
 
   fclose(f);
   XML_ParserFree(parser);
+
+  free(xmltext);
 
   return size;
 }
