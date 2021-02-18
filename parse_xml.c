@@ -3,9 +3,10 @@
 #include <expat.h>
 #include "parse_xml.h"
 
-#define FOUR_GIBIBYTE             4294967296   //  4 GiB
+#define FOUR_GIBIBYTE             4294967296   // 4 GiB
 #define TIBERO6_XMLTYPE_MAXSIZE   FOUR_GIBIBYTE
-#define BUFFSIZE                  FOUR_GIBIBYTE
+#define LARGE_BUFFSIZE            FOUR_GIBIBYTE
+#define BUFFSIZE                        8192   // 8 KiB
 
 //
 #define SITE_INFO   "siteinfo"
@@ -13,9 +14,16 @@
 
 
 /* Keep track of the current level in the XML tree */
-static int         depth = 0;
-static size_t      count = 0;
-
+static int             depth = 0;
+static size_t          count = 0;
+static long            siteinfo_offset_start,
+                       siteinfo_offset_end,
+                       page_offset_start,
+                       page_offset_end;
+static XML_Parser      parser;
+static char           *xmltext,
+                      *siteinfo_buff,
+                      *page_buff;
 
 void start(void *data, const char *el, const char **attr) {
   int             i;
@@ -23,9 +31,11 @@ void start(void *data, const char *el, const char **attr) {
   for (i = 0; i < depth; i++)
     printf("  ");
 
-  //if(!strcmp(PAGE, el)) {
-    // TODO: PUSH
-  //}
+  if(!strcmp(SITE_INFO, el))
+    siteinfo_offset_start = XML_GetCurrentByteIndex(parser);
+
+  if(!strcmp(PAGE, el))
+    page_offset_start = XML_GetCurrentByteIndex(parser);
 
   printf("%s", el);
 
@@ -41,9 +51,33 @@ void start(void *data, const char *el, const char **attr) {
 void end(void *data, const char *el) {
   depth--;
 
-  //if(!strcmp(PAGE, el)) {
-    // TODO: POP
-  //}
+  if(!strcmp(SITE_INFO, el)) {
+    siteinfo_offset_end = XML_GetCurrentByteIndex(parser);
+
+    strncpy(siteinfo_buff,
+            xmltext + siteinfo_offset_start,
+            siteinfo_offset_end - siteinfo_offset_start);
+
+    strcat(siteinfo_buff, "</siteinfo>");
+    //TODO: Detect <mediawiki> and </mediawiki>
+  }
+
+  if(!strcmp(PAGE, el)) {
+
+    ++count;
+    page_offset_end = XML_GetCurrentByteIndex(parser);
+
+    strncpy(page_buff,
+            xmltext + page_offset_start,
+            page_offset_end - page_offset_start);
+
+    strcat(page_buff, "</page>");
+
+    //printf("\nPAGE\n%s\n", page_buff);
+
+    // Free the page buffer
+    page_buff[0] = '\0';
+  }
 }               /* End of end handler */
 
 
@@ -51,10 +85,14 @@ size_t parse_xml(const char *filename) {
 
   FILE           *f;
   size_t          size;
-  char           *xmltext;
-  XML_Parser      parser;
 
-  xmltext=malloc(BUFFSIZE);
+  xmltext       = malloc(LARGE_BUFFSIZE);
+
+  // Initialize static variables
+  siteinfo_buff      = malloc(LARGE_BUFFSIZE);
+  siteinfo_buff[0]   = '\0';
+  page_buff          = malloc(LARGE_BUFFSIZE);
+  page_buff[0]       = '\0';
 
   parser = XML_ParserCreate(NULL);
   if (parser == NULL) {
@@ -68,7 +106,7 @@ size_t parse_xml(const char *filename) {
   f = fopen(filename, "r");
 
   /* Slurp the XML file in the buffer xmltext */
-  size = fread(xmltext, sizeof(char), BUFFSIZE, f);
+  size = fread(xmltext, sizeof(char), LARGE_BUFFSIZE, f);
   if (XML_Parse(parser, xmltext, strlen(xmltext), XML_TRUE) ==
       XML_STATUS_ERROR) {
     fprintf(stderr,
@@ -80,7 +118,11 @@ size_t parse_xml(const char *filename) {
   fclose(f);
   XML_ParserFree(parser);
 
+  printf("\nSITEINFO\n%s\n", siteinfo_buff);
+  printf("\n\nTotal %zd pages\n", count);
+
   free(xmltext);
+  free(siteinfo_buff);
 
   return size;
 }
