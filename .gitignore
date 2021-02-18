@@ -1,5 +1,5 @@
 # Ignore target
-parse_xml
+tibero_xml
 
 # Ignore file extensions
 *.o
