@@ -1,0 +1,5 @@
+# Ignore target
+parse_xml
+
+# Ignore file extensions
+*.o
