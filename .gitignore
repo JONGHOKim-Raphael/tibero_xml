@@ -1,5 +1,8 @@
 # Ignore target
 tibero_xml
 
+# Ignore test directory
+test/
+
 # Ignore file extensions
 *.o
