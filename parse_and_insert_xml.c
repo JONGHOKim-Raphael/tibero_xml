@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <expat.h>
-#include "parse_xml.h"
+#include "parse_and_insert_xml.h"
 
 #define FOUR_GIBIBYTE             4294967296   // 4 GiB
 #define TIBERO6_XMLTYPE_MAXSIZE   FOUR_GIBIBYTE
@@ -81,7 +81,7 @@ void end(void *data, const char *el) {
 }               /* End of end handler */
 
 
-size_t parse_xml(const char *filename) {
+size_t parse_and_insert_xml(const char *filename) {
 
   FILE           *f;
   size_t          size;

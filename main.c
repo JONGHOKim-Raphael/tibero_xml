@@ -11,7 +11,7 @@
 */
 
 #include <stdio.h>
-#include "parse_xml.h"
+#include "parse_and_insert_xml.h"
 
 
 int main(int argc, char **argv) {
@@ -26,7 +26,7 @@ int main(int argc, char **argv) {
 
     filename = argv[1];
 
-    size = parse_xml(filename);
+    size = parse_and_insert_xml(filename);
 
     fprintf(stdout, "Successfully parsed %li characters in file %s\n", size, filename);
     return (0);
