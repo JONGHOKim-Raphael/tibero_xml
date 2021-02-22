@@ -1,6 +1,9 @@
 # Ignore target
 tibero_xml
 
+# Ignore login information file
+login_info.txt
+
 # Ignore test directory
 test/
 
