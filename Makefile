@@ -1,6 +1,6 @@
 SRCS            = $(wildcard *.c)
 OBJS            = $(SRCS:.c=.o)
-LIBS            = -lexpat
+LIBS            = -lexpat -L$(TB_HOME)/client/lib -ltbcli
 TARGET          = tibero_xml
 
 all: $(OBJS)
