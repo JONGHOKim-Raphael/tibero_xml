@@ -65,9 +65,8 @@ void disconnect_tibero() {
 void insert_xml(int uk_id, char *title, char *xmltext) {
 
   SQLRETURN   ret    = SQL_SUCCESS;
-  //  SQLCHAR    *insert = "INSERT INTO UK(UK_ID, TITLE, KNOWLEDGE) VALUES(?, ?, XMLType(?))";
-  SQLCHAR    *insert = "INSERT INTO UK VALUES(?, ?, XMLType(?))";
-
+  //SQLCHAR    *insert = "INSERT INTO UK(UK_ID, TITLE) VALUES(?, ?)";
+  SQLCHAR    *insert = "INSERT INTO UK(UK_ID, TITLE, KNOWLEDGE) VALUES(?, ?, XMLType(?))";
 
   ret = SQLBindParameter(hstmt,                //   StatementHandle
                          1,                    //   ParameterNumber
@@ -80,6 +79,9 @@ void insert_xml(int uk_id, char *title, char *xmltext) {
                          0,                    //   BufferLength
                          NULL);                //  *StrLen_or_IndPtr
 
+  DEBUG_INFO("\nPAGE SIZE: %zd", strlen(xmltext));
+  DEBUG_INFO("\n%s\n", xmltext);
+
   ret = SQLBindParameter(hstmt,                //   StatementHandle
                          2,                    //   ParameterNumber
                          SQL_PARAM_INPUT,      //   InputOutputType
@@ -90,6 +92,7 @@ void insert_xml(int uk_id, char *title, char *xmltext) {
                          (SQLCHAR *)title,     //   ParameterValue
                          strlen(title),        //   BufferLength
                          NULL);                //  *StrLen_or_IndPtr
+
 
   ret = SQLBindParameter(hstmt,                //   StatementHandle
                          3,                    //   ParameterNumber

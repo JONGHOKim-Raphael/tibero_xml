@@ -26,6 +26,7 @@
 /* Keep track of the current level in the XML tree */
 static int             depth = 0;
 static size_t          count = 0;
+static size_t          prefixlen, max_pagelen;
 static long            prefix_offset_start,
                        prefix_offset_end,
                        page_offset_start,
@@ -35,6 +36,7 @@ static long            prefix_offset_start,
 static XML_Parser      parser;
 static char           *xmltext;
 static char           *xml_buff;
+
 
 // Read-only pointers.
 // The prefix_buff stores <mediawiki> to </siteinfo>. Need </mediawiki>
@@ -78,7 +80,7 @@ void end(void *data, const char *el) {
   depth--;
   */
 
-  size_t page_len;
+  size_t pagelen;
 
   if(count > 300)
     return;
@@ -86,9 +88,11 @@ void end(void *data, const char *el) {
   if(!strcmp(SITEINFO, el)) {
     prefix_offset_end = XML_GetCurrentByteIndex(parser);
 
+    prefixlen = prefix_offset_end - prefix_offset_start;
+    max_pagelen = LARGE_BUFFSIZE - prefixlen;
     strncpy(prefix_buff,
             xmltext + prefix_offset_start,
-            prefix_offset_end - prefix_offset_start);
+            prefixlen);
 
     strcat(prefix_buff, SITEINFO_SUFFIX);
     page_buff = prefix_buff + strlen(prefix_buff);
@@ -98,11 +102,11 @@ void end(void *data, const char *el) {
 
     page_offset_end = XML_GetCurrentByteIndex(parser);
 
-    page_len = page_offset_end - page_offset_start;
+    pagelen = page_offset_end - page_offset_start;
 
     strncpy(page_buff,
             xmltext + page_offset_start,
-            page_len);
+            pagelen);
 
     strcat(xml_buff, PAGE_SUFFIX);
     strcat(xml_buff, MEDIAWIKI_SUFFIX);
@@ -111,7 +115,7 @@ void end(void *data, const char *el) {
     insert_xml(count, title, xml_buff);
 
     // Free the page buffer and title buffer
-    memset(page_buff, '\0', page_len);
+    memset(page_buff, '\0', max_pagelen);
     memset(title, '\0', BUFFSIZE);
   }
 
