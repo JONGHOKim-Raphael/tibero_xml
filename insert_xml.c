@@ -20,7 +20,7 @@ void connect_tibero() {
   FILE      *fp;
   SQLCHAR   *create;
 
-  create = "CREATE TABLE UK( UK_ID NUMBER PRIMARY KEY, KNOWLEDGE sys.XMLType )";
+  create = "CREATE TABLE UK( UK_ID NUMBER PRIMARY KEY, TITLE VARCHAR2(4000), KNOWLEDGE sys.XMLType )";
 
   // Read login information from login_info.txt
   fp = fopen("LOGIN_INFO.txt", "r");
@@ -62,10 +62,11 @@ void disconnect_tibero() {
 }
 
 
-void insert_xml(int uk_id, char *xmltext) {
+void insert_xml(int uk_id, char *title, char *xmltext) {
 
   SQLRETURN   ret    = SQL_SUCCESS;
-  SQLCHAR    *insert = "INSERT INTO UK(UK_ID, KNOWLEDGE) VALUES(?, XMLType(?))";
+  //  SQLCHAR    *insert = "INSERT INTO UK(UK_ID, TITLE, KNOWLEDGE) VALUES(?, ?, XMLType(?))";
+  SQLCHAR    *insert = "INSERT INTO UK VALUES(?, ?, XMLType(?))";
 
 
   ret = SQLBindParameter(hstmt,                //   StatementHandle
@@ -81,6 +82,17 @@ void insert_xml(int uk_id, char *xmltext) {
 
   ret = SQLBindParameter(hstmt,                //   StatementHandle
                          2,                    //   ParameterNumber
+                         SQL_PARAM_INPUT,      //   InputOutputType
+                         SQL_C_CHAR,           //   ValueType
+                         SQL_VARCHAR,          //   ParameterType
+                         0,                    //   ColumnSize
+                         0,                    //   DecimalDigits
+                         (SQLCHAR *)title,     //   ParameterValue
+                         strlen(title),        //   BufferLength
+                         NULL);                //  *StrLen_or_IndPtr
+
+  ret = SQLBindParameter(hstmt,                //   StatementHandle
+                         3,                    //   ParameterNumber
                          SQL_PARAM_INPUT,      //   InputOutputType
                          SQL_C_CHAR,           //   ValueType
                          SQL_VARCHAR,          //   ParameterType

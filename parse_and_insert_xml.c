@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>   // exit()
 #include <string.h>
 #include <expat.h>
 #include "parse_and_insert_xml.h"
@@ -16,6 +17,8 @@
 #define MEDIAWIKI_SUFFIX         "\n</mediawiki>"
 #define SITEINFO                 "siteinfo"
 #define SITEINFO_SUFFIX          "</siteinfo>\n" SPACE
+#define TITLE                    "title"
+#define TITLE_TAGLEN             strlen("<title>")
 #define PAGE                     "page"
 #define PAGE_SUFFIX              "</page>"
 
@@ -26,13 +29,16 @@ static size_t          count = 0;
 static long            prefix_offset_start,
                        prefix_offset_end,
                        page_offset_start,
-                       page_offset_end;
+                       page_offset_end,
+                       title_offset_start,
+                       title_offset_end;
 static XML_Parser      parser;
 static char           *xmltext;
 static char           *xml_buff;
+
 // Read-only pointers.
 // The prefix_buff stores <mediawiki> to </siteinfo>. Need </mediawiki>
-static char           *prefix_buff, *page_buff;
+static char           *prefix_buff, *page_buff, *title;
 
 
 void start(void *data, const char *el, const char **attr) {
@@ -54,10 +60,16 @@ void start(void *data, const char *el, const char **attr) {
   */
 
   if(!strcmp(MEDIAWIKI, el))
-    prefix_offset_start = XML_GetCurrentByteIndex(parser);
+    prefix_offset_start   = XML_GetCurrentByteIndex(parser);
 
-  if(!strcmp(PAGE, el))
-    page_offset_start = XML_GetCurrentByteIndex(parser);
+  if(!strcmp(PAGE, el)) {
+    ++count;
+    page_offset_start     = XML_GetCurrentByteIndex(parser);
+  }
+
+  if(!strcmp(TITLE, el))
+    title_offset_start    = XML_GetCurrentByteIndex(parser);
+
 }               /* End of start handler */
 
 
@@ -67,6 +79,9 @@ void end(void *data, const char *el) {
   */
 
   size_t page_len;
+
+  if(count > 300)
+    return;
 
   if(!strcmp(SITEINFO, el)) {
     prefix_offset_end = XML_GetCurrentByteIndex(parser);
@@ -81,7 +96,6 @@ void end(void *data, const char *el) {
 
   if(!strcmp(PAGE, el)) {
 
-    ++count;
     page_offset_end = XML_GetCurrentByteIndex(parser);
 
     page_len = page_offset_end - page_offset_start;
@@ -92,14 +106,22 @@ void end(void *data, const char *el) {
 
     strcat(xml_buff, PAGE_SUFFIX);
     strcat(xml_buff, MEDIAWIKI_SUFFIX);
-    if(count < 10)
-      DEBUG_INFO("\nXML WITH A PAGE\n%s\n", xml_buff);
 
     //TODO
-    insert_xml(count, xml_buff);
+    insert_xml(count, title, xml_buff);
 
-    // Free the page buffer
+    // Free the page buffer and title buffer
     memset(page_buff, '\0', page_len);
+    memset(title, '\0', BUFFSIZE);
+  }
+
+  if(!strcmp(TITLE, el)) {
+    title_offset_end = XML_GetCurrentByteIndex(parser);
+    strncpy(title,
+            xmltext          + title_offset_start + TITLE_TAGLEN,
+            title_offset_end - title_offset_start - TITLE_TAGLEN);
+
+    DEBUG_INFO("\n%zd-th TITLE: %s", count, title);
   }
 }               /* End of end handler */
 
@@ -113,8 +135,10 @@ size_t parse_and_insert_xml(const char *filename) {
 
   // Initialize static variables
   xml_buff           = malloc(LARGE_BUFFSIZE);
-  xml_buff[0]        = '\0';
+  memset(xml_buff, '\0', LARGE_BUFFSIZE);
   prefix_buff        = xml_buff;
+  title              = malloc(BUFFSIZE);
+  memset(title, '\0', BUFFSIZE);
 
   parser = XML_ParserCreate(NULL);
   if (parser == NULL) {
@@ -150,6 +174,7 @@ size_t parse_and_insert_xml(const char *filename) {
   DEBUG_INFO("\n\nTotal %zd pages\n", count);
   free(xmltext);
   free(xml_buff);
+  free(title);
 
   return size;
 }
