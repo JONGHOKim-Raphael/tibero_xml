@@ -13,8 +13,10 @@
 //
 #define MEDIAWIKI                "mediawiki"
 #define MEDIAWIKI_SUFFIX         "\n</mediawiki>"
-#define SITE_INFO                "siteinfo"
+#define SITEINFO                 "siteinfo"
+#define SITEINFO_SUFFIX          "</siteinfo>"
 #define PAGE                     "page"
+#define PAGE_SUFFIX              "</page>"
 
 
 /* Keep track of the current level in the XML tree */
@@ -25,9 +27,11 @@ static long            prefix_offset_start,
                        page_offset_start,
                        page_offset_end;
 static XML_Parser      parser;
-static char           *xmltext, *page_buff;
+static char           *xmltext;
+static char           *xml_buff, *suffix_buff;
+// Read-only pointers.
 // The prefix_buff stores <mediawiki> to </siteinfo>. Need </mediawiki>
-static char           *prefix_buff, *suffix_buff;
+static char           *prefix_buff, *page_buff;
 
 
 void start(void *data, const char *el, const char **attr) {
@@ -56,14 +60,15 @@ void start(void *data, const char *el, const char **attr) {
 void end(void *data, const char *el) {
   depth--;
 
-  if(!strcmp(SITE_INFO, el)) {
+  if(!strcmp(SITEINFO, el)) {
     prefix_offset_end = XML_GetCurrentByteIndex(parser);
 
     strncpy(prefix_buff,
             xmltext + prefix_offset_start,
             prefix_offset_end - prefix_offset_start);
 
-    strcat(prefix_buff, "</siteinfo>");
+    strcat(prefix_buff, SITEINFO_SUFFIX);
+    page_buff = prefix_buff + strlen(prefix_buff);
   }
 
   if(!strcmp(PAGE, el)) {
@@ -75,7 +80,7 @@ void end(void *data, const char *el) {
             xmltext + page_offset_start,
             page_offset_end - page_offset_start);
 
-    strcat(page_buff, "</page>");
+    strcat(page_buff,PAGE_SUFFIX);
 
     //DEBUG_INFO("\nPAGE\n%s\n", page_buff);
 
@@ -93,12 +98,11 @@ size_t parse_and_insert_xml(const char *filename) {
   xmltext       = malloc(LARGE_BUFFSIZE);
 
   // Initialize static variables
-  prefix_buff        = malloc(LARGE_BUFFSIZE);
-  prefix_buff[0]     = '\0';
+  xml_buff           = malloc(LARGE_BUFFSIZE);
+  xml_buff[0]        = '\0';
+  prefix_buff        = xml_buff;
   suffix_buff        = malloc(strlen(MEDIAWIKI_SUFFIX));
   strcpy(suffix_buff, MEDIAWIKI_SUFFIX);
-  page_buff          = malloc(LARGE_BUFFSIZE);
-  page_buff[0]       = '\0';
 
   parser = XML_ParserCreate(NULL);
   if (parser == NULL) {
@@ -134,7 +138,7 @@ size_t parse_and_insert_xml(const char *filename) {
   DEBUG_INFO("\nSITEINFO\n%s%s\n", prefix_buff, suffix_buff);
   DEBUG_INFO("\n\nTotal %zd pages\n", count);
   free(xmltext);
-  free(prefix_buff);
+  free(xml_buff);
   free(suffix_buff);
 
   return size;
