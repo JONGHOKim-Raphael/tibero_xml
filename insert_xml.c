@@ -25,6 +25,7 @@ void connect_tibero() {
   // Read login information from login_info.txt
   fp = fopen("login_info.txt", "r");
   fscanf(fp, "dbname: %s\nuser: %s\npassword: %s", dbname, user, password);
+  DEBUG_INFO("dbname: %s user: %s password: %s", dbname, user, password);
   fclose(fp);
 
   ret = SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HANDLE, &henv);

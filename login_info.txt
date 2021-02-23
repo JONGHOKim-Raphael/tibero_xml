@@ -1,0 +1,3 @@
+dbname:   AAA
+user:     BBB
+password: CCC 
