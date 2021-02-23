@@ -38,14 +38,9 @@ static char           *prefix_buff, *page_buff;
 void start(void *data, const char *el, const char **attr) {
   int             i;
 
+  /*
   for (i = 0; i < depth; i++)
     printf("%s", SPACE);
-
-  if(!strcmp(MEDIAWIKI, el))
-    prefix_offset_start = XML_GetCurrentByteIndex(parser);
-
-  if(!strcmp(PAGE, el))
-    page_offset_start = XML_GetCurrentByteIndex(parser);
 
   printf("%s", el);
 
@@ -54,12 +49,24 @@ void start(void *data, const char *el, const char **attr) {
   }
 
   printf("\n");
+
   depth++;
+  */
+
+  if(!strcmp(MEDIAWIKI, el))
+    prefix_offset_start = XML_GetCurrentByteIndex(parser);
+
+  if(!strcmp(PAGE, el))
+    page_offset_start = XML_GetCurrentByteIndex(parser);
 }               /* End of start handler */
 
 
 void end(void *data, const char *el) {
+  /*
   depth--;
+  */
+
+  size_t page_len;
 
   if(!strcmp(SITEINFO, el)) {
     prefix_offset_end = XML_GetCurrentByteIndex(parser);
@@ -77,9 +84,11 @@ void end(void *data, const char *el) {
     ++count;
     page_offset_end = XML_GetCurrentByteIndex(parser);
 
+    page_len = page_offset_end - page_offset_start;
+
     strncpy(page_buff,
             xmltext + page_offset_start,
-            page_offset_end - page_offset_start);
+            page_len);
 
     strcat(xml_buff, PAGE_SUFFIX);
     strcat(xml_buff, MEDIAWIKI_SUFFIX);
@@ -87,7 +96,7 @@ void end(void *data, const char *el) {
       DEBUG_INFO("\nXML WITH A PAGE\n%s\n", xml_buff);
 
     // Free the page buffer
-    page_buff[0] = '\0';
+    memset(page_buff, '\0', page_len);
   }
 }               /* End of end handler */
 
