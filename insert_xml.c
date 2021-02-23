@@ -23,7 +23,7 @@ void connect_tibero() {
   create = "CREATE TABLE UK( UK_ID NUMBER PRIMARY KEY, KNOWLEDGE sys.XMLType )";
 
   // Read login information from login_info.txt
-  fp = fopen("login_info.txt", "r");
+  fp = fopen("LOGIN_INFO.txt", "r");
   fscanf(fp, "dbname: %s\nuser: %s\npassword: %s", dbname, user, password);
   DEBUG_INFO("dbname: %s user: %s password: %s", dbname, user, password);
   fclose(fp);
