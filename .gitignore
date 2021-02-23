@@ -10,3 +10,7 @@ test/
 
 # Ignore file extensions
 *.o
+
+#
+*.out
+out
