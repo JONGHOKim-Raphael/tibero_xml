@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include <stdlib.h>   // exit()
+#include <string.h>
 #include <sqlcli.h>
 #include "insert_xml.h"
 #include "debug.h"
@@ -31,7 +31,6 @@ void connect_tibero() {
   ret = SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HANDLE, &henv);
   if(ret != SQL_SUCCESS) {
     fprintf(stderr, "Error allocating SQL handle");
-    exit(1);
   }
 
   ret = SQLSetEnvAttr(henv, SQL_ATTR_ODBC_VERSION, (SQLPOINTER *)SQL_OV_ODBC3, 0);
@@ -63,35 +62,33 @@ void disconnect_tibero() {
 }
 
 
-void insert_xml(const long uk_id, const char *xmltext) {
+void insert_xml(int uk_id, char *xmltext) {
 
   SQLRETURN   ret    = SQL_SUCCESS;
   SQLCHAR    *insert = "INSERT INTO UK VALUES(?, sys.XMLType.createXML(?))";
 
 
-  /*
-  ret = SQLBindParameter(hstmt,             //   StatementHandle
-                         1,                 //   ParameterNumber
-                         SQL_PARAM_INPUT,   //   InputOutputType
-                         SQLINTEGER,        //   ValueType
-                         SQLINTEGER,        //   ParameterType
-                         0,                 //   ColumnSize
-                         0,                 //   DecimalDigits
-                         &uk_id,            //   ParameterValue
-                         255,               //   BufferLength
-                         NULL);             //  *StrLen_or_IndPtr
+  ret = SQLBindParameter(hstmt,                //   StatementHandle
+                         1,                    //   ParameterNumber
+                         SQL_PARAM_INPUT,      //   InputOutputType
+                         SQL_C_INT,            //   ValueType
+                         SQL_NUMERIC,          //   ParameterType
+                         0,                    //   ColumnSize
+                         0,                    //   DecimalDigits
+                         &uk_id,               //   ParameterValue
+                         0,                    //   BufferLength
+                         NULL);                //  *StrLen_or_IndPtr
 
-  ret = SQLBindParameter(hstmt,             //   StatementHandle
-                         2,                 //   ParameterNumber
-                         SQL_PARAM_INPUT,   //   InputOutputType
-                         SQL_C_CHAR,        //   ValueType
-                         SQLCHAR,           //   ParameterType
-                         0,                 //   ColumnSize
-                         0,                 //   DecimalDigits
-                         xmltext,           //   ParameterValue
-                         strlen(xmltext),   //   BufferLength
-                         SQL_NTS);          //  *StrLen_or_IndPtr
-  */
+  ret = SQLBindParameter(hstmt,                //   StatementHandle
+                         2,                    //   ParameterNumber
+                         SQL_PARAM_INPUT,      //   InputOutputType
+                         SQL_C_CHAR,           //   ValueType
+                         SQL_VARCHAR,          //   ParameterType
+                         0,                    //   ColumnSize
+                         0,                    //   DecimalDigits
+                         (SQLCHAR *)xmltext,   //   ParameterValue
+                         strlen(xmltext),      //   BufferLength
+                         NULL);                //  *StrLen_or_IndPtr
 
 
   ret = SQLPrepare(hstmt, insert, SQL_NTS);
