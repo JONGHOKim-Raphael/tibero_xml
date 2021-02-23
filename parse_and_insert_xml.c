@@ -11,6 +11,9 @@
 #define LARGE_BUFFSIZE            FOUR_GIBIBYTE
 #define BUFFSIZE                        8192   // 8 KiB
 
+// Progress
+#define PROGRESS_UNIT            100
+
 //
 #define SPACE                    "  "
 #define MEDIAWIKI                "mediawiki"
@@ -24,7 +27,6 @@
 
 
 /* Keep track of the current level in the XML tree */
-static int             depth = 0;
 static size_t          count = 0;
 static size_t          prefixlen, max_pagelen;
 static long            prefix_offset_start,
@@ -46,21 +48,6 @@ static char           *prefix_buff, *page_buff, *title;
 void start(void *data, const char *el, const char **attr) {
   int             i;
 
-  /*
-  for (i = 0; i < depth; i++)
-    printf("%s", SPACE);
-
-  printf("%s", el);
-
-  for (i = 0; attr[i]; i += 2) {
-    printf(" %s='%s'", attr[i], attr[i + 1]);
-  }
-
-  printf("\n");
-
-  depth++;
-  */
-
   if(!strcmp(MEDIAWIKI, el))
     prefix_offset_start   = XML_GetCurrentByteIndex(parser);
 
@@ -76,14 +63,8 @@ void start(void *data, const char *el, const char **attr) {
 
 
 void end(void *data, const char *el) {
-  /*
-  depth--;
-  */
 
   size_t pagelen;
-
-  if(count > 300)
-    return;
 
   if(!strcmp(SITEINFO, el)) {
     prefix_offset_end = XML_GetCurrentByteIndex(parser);
@@ -99,6 +80,12 @@ void end(void *data, const char *el) {
   }
 
   if(!strcmp(PAGE, el)) {
+    //  if(count > 300)
+    //  return;
+
+    // We should show progress
+    if(count % PROGRESS_UNIT == 0 && count != 0)
+      fprintf(stderr, "\n%zd x%d rows inserted", count / PROGRESS_UNIT, PROGRESS_UNIT);
 
     page_offset_end = XML_GetCurrentByteIndex(parser);
 
@@ -111,7 +98,7 @@ void end(void *data, const char *el) {
     strcat(xml_buff, PAGE_SUFFIX);
     strcat(xml_buff, MEDIAWIKI_SUFFIX);
 
-    //TODO
+    // Insert XML using tbCLI
     insert_xml(count, title, xml_buff);
 
     // Free the page buffer and title buffer
