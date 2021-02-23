@@ -102,6 +102,9 @@ size_t parse_and_insert_xml(const char *filename) {
     return (1);
   }
 
+  // Connect to Tibero
+  connect_tibero();
+
   /* Tell expat to use functions start() and end() each times it encounters
    * the start or end of an element. */
   XML_SetElementHandler(parser, start, end);
@@ -118,11 +121,14 @@ size_t parse_and_insert_xml(const char *filename) {
   }
 
   fclose(f);
+
+  // Disconnect Tibero
+  disconnect_tibero();
+
   XML_ParserFree(parser);
 
-  DEBUG_PRINT("\nSITEINFO\n%s\n", siteinfo_buff);
-  printf("\n\nTotal %zd pages\n", count);
-
+  DEBUG_INFO("\nSITEINFO\n%s\n", siteinfo_buff);
+  DEBUG_INFO("\n\nTotal %zd pages\n", count);
   free(xmltext);
   free(siteinfo_buff);
 
