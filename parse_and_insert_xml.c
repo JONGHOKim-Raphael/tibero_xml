@@ -28,7 +28,7 @@ static long            prefix_offset_start,
                        page_offset_end;
 static XML_Parser      parser;
 static char           *xmltext;
-static char           *xml_buff, *suffix_buff;
+static char           *xml_buff;
 // Read-only pointers.
 // The prefix_buff stores <mediawiki> to </siteinfo>. Need </mediawiki>
 static char           *prefix_buff, *page_buff;
@@ -80,8 +80,8 @@ void end(void *data, const char *el) {
             xmltext + page_offset_start,
             page_offset_end - page_offset_start);
 
-    strcat(page_buff,PAGE_SUFFIX);
-
+    strcat(xml_buff, PAGE_SUFFIX);
+    strcat(xml_buff, MEDIAWIKI_SUFFIX);
     //DEBUG_INFO("\nPAGE\n%s\n", page_buff);
 
     // Free the page buffer
@@ -101,8 +101,6 @@ size_t parse_and_insert_xml(const char *filename) {
   xml_buff           = malloc(LARGE_BUFFSIZE);
   xml_buff[0]        = '\0';
   prefix_buff        = xml_buff;
-  suffix_buff        = malloc(strlen(MEDIAWIKI_SUFFIX));
-  strcpy(suffix_buff, MEDIAWIKI_SUFFIX);
 
   parser = XML_ParserCreate(NULL);
   if (parser == NULL) {
@@ -139,7 +137,6 @@ size_t parse_and_insert_xml(const char *filename) {
   DEBUG_INFO("\n\nTotal %zd pages\n", count);
   free(xmltext);
   free(xml_buff);
-  free(suffix_buff);
 
   return size;
 }
