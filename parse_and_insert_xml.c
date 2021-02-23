@@ -2,6 +2,8 @@
 #include <string.h>
 #include <expat.h>
 #include "parse_and_insert_xml.h"
+#include "insert_xml.h"
+#include "debug.h"
 
 #define FOUR_GIBIBYTE             4294967296   // 4 GiB
 #define TIBERO6_XMLTYPE_MAXSIZE   FOUR_GIBIBYTE
@@ -118,7 +120,7 @@ size_t parse_and_insert_xml(const char *filename) {
   fclose(f);
   XML_ParserFree(parser);
 
-  printf("\nSITEINFO\n%s\n", siteinfo_buff);
+  DEBUG_PRINT("\nSITEINFO\n%s\n", siteinfo_buff);
   printf("\n\nTotal %zd pages\n", count);
 
   free(xmltext);

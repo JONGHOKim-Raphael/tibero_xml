@@ -1,5 +1,6 @@
 # Ignore target
 tibero_xml
+tibero_xml-debug
 
 # Ignore login information file
 login_info.txt
