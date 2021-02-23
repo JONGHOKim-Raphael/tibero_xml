@@ -65,7 +65,7 @@ void disconnect_tibero() {
 void insert_xml(int uk_id, char *xmltext) {
 
   SQLRETURN   ret    = SQL_SUCCESS;
-  SQLCHAR    *insert = "INSERT INTO UK VALUES(?, sys.XMLType.createXML(?))";
+  SQLCHAR    *insert = "INSERT INTO UK(UK_ID, KNOWLEDGE) VALUES(?, XMLType(?))";
 
 
   ret = SQLBindParameter(hstmt,                //   StatementHandle
