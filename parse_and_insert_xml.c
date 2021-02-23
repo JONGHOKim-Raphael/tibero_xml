@@ -11,21 +11,24 @@
 #define BUFFSIZE                        8192   // 8 KiB
 
 //
-#define SITE_INFO   "siteinfo"
-#define PAGE        "page"
+#define MEDIAWIKI                "mediawiki"
+#define MEDIAWIKI_SUFFIX         "\n</mediawiki>"
+#define SITE_INFO                "siteinfo"
+#define PAGE                     "page"
 
 
 /* Keep track of the current level in the XML tree */
 static int             depth = 0;
 static size_t          count = 0;
-static long            siteinfo_offset_start,
-                       siteinfo_offset_end,
+static long            prefix_offset_start,
+                       prefix_offset_end,
                        page_offset_start,
                        page_offset_end;
 static XML_Parser      parser;
-static char           *xmltext,
-                      *siteinfo_buff,
-                      *page_buff;
+static char           *xmltext, *page_buff;
+// The prefix_buff stores <mediawiki> to </siteinfo>. Need </mediawiki>
+static char           *prefix_buff, *suffix_buff;
+
 
 void start(void *data, const char *el, const char **attr) {
   int             i;
@@ -33,8 +36,8 @@ void start(void *data, const char *el, const char **attr) {
   for (i = 0; i < depth; i++)
     printf("  ");
 
-  if(!strcmp(SITE_INFO, el))
-    siteinfo_offset_start = XML_GetCurrentByteIndex(parser);
+  if(!strcmp(MEDIAWIKI, el))
+    prefix_offset_start = XML_GetCurrentByteIndex(parser);
 
   if(!strcmp(PAGE, el))
     page_offset_start = XML_GetCurrentByteIndex(parser);
@@ -54,14 +57,13 @@ void end(void *data, const char *el) {
   depth--;
 
   if(!strcmp(SITE_INFO, el)) {
-    siteinfo_offset_end = XML_GetCurrentByteIndex(parser);
+    prefix_offset_end = XML_GetCurrentByteIndex(parser);
 
-    strncpy(siteinfo_buff,
-            xmltext + siteinfo_offset_start,
-            siteinfo_offset_end - siteinfo_offset_start);
+    strncpy(prefix_buff,
+            xmltext + prefix_offset_start,
+            prefix_offset_end - prefix_offset_start);
 
-    strcat(siteinfo_buff, "</siteinfo>");
-    //TODO: Detect <mediawiki> and </mediawiki>
+    strcat(prefix_buff, "</siteinfo>");
   }
 
   if(!strcmp(PAGE, el)) {
@@ -75,7 +77,7 @@ void end(void *data, const char *el) {
 
     strcat(page_buff, "</page>");
 
-    //printf("\nPAGE\n%s\n", page_buff);
+    //DEBUG_INFO("\nPAGE\n%s\n", page_buff);
 
     // Free the page buffer
     page_buff[0] = '\0';
@@ -91,8 +93,10 @@ size_t parse_and_insert_xml(const char *filename) {
   xmltext       = malloc(LARGE_BUFFSIZE);
 
   // Initialize static variables
-  siteinfo_buff      = malloc(LARGE_BUFFSIZE);
-  siteinfo_buff[0]   = '\0';
+  prefix_buff        = malloc(LARGE_BUFFSIZE);
+  prefix_buff[0]     = '\0';
+  suffix_buff        = malloc(strlen(MEDIAWIKI_SUFFIX));
+  strcpy(suffix_buff, MEDIAWIKI_SUFFIX);
   page_buff          = malloc(LARGE_BUFFSIZE);
   page_buff[0]       = '\0';
 
@@ -127,10 +131,11 @@ size_t parse_and_insert_xml(const char *filename) {
 
   XML_ParserFree(parser);
 
-  DEBUG_INFO("\nSITEINFO\n%s\n", siteinfo_buff);
+  DEBUG_INFO("\nSITEINFO\n%s%s\n", prefix_buff, suffix_buff);
   DEBUG_INFO("\n\nTotal %zd pages\n", count);
   free(xmltext);
-  free(siteinfo_buff);
+  free(prefix_buff);
+  free(suffix_buff);
 
   return size;
 }
