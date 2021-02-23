@@ -13,7 +13,7 @@ all: $(OBJS)
 $(OBJS): $(SRCS)
 	$(CC) -c $(SRCS)
 
-debug: $(SRCS)
+debug: clean $(SRCS)
 	$(CC) -c $(SRCS) $(DEBUG_FLAGS)
 	$(CC) -o $(DEBUG_TARGET) $(OBJS) $(LIBS)
 
