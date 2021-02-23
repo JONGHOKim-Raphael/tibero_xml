@@ -95,6 +95,9 @@ void end(void *data, const char *el) {
     if(count < 10)
       DEBUG_INFO("\nXML WITH A PAGE\n%s\n", xml_buff);
 
+    //TODO
+    insert_xml(count, xml_buff);
+
     // Free the page buffer
     memset(page_buff, '\0', page_len);
   }
