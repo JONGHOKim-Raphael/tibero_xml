@@ -11,10 +11,11 @@
 #define BUFFSIZE                        8192   // 8 KiB
 
 //
+#define SPACE                    "  "
 #define MEDIAWIKI                "mediawiki"
 #define MEDIAWIKI_SUFFIX         "\n</mediawiki>"
 #define SITEINFO                 "siteinfo"
-#define SITEINFO_SUFFIX          "</siteinfo>"
+#define SITEINFO_SUFFIX          "</siteinfo>\n" SPACE
 #define PAGE                     "page"
 #define PAGE_SUFFIX              "</page>"
 
@@ -38,7 +39,7 @@ void start(void *data, const char *el, const char **attr) {
   int             i;
 
   for (i = 0; i < depth; i++)
-    printf("  ");
+    printf("%s", SPACE);
 
   if(!strcmp(MEDIAWIKI, el))
     prefix_offset_start = XML_GetCurrentByteIndex(parser);
@@ -82,7 +83,8 @@ void end(void *data, const char *el) {
 
     strcat(xml_buff, PAGE_SUFFIX);
     strcat(xml_buff, MEDIAWIKI_SUFFIX);
-    //DEBUG_INFO("\nPAGE\n%s\n", page_buff);
+    if(count < 10)
+      DEBUG_INFO("\nXML WITH A PAGE\n%s\n", xml_buff);
 
     // Free the page buffer
     page_buff[0] = '\0';
@@ -133,7 +135,6 @@ size_t parse_and_insert_xml(const char *filename) {
 
   XML_ParserFree(parser);
 
-  DEBUG_INFO("\nSITEINFO\n%s%s\n", prefix_buff, suffix_buff);
   DEBUG_INFO("\n\nTotal %zd pages\n", count);
   free(xmltext);
   free(xml_buff);
