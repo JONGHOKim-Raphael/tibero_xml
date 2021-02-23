@@ -8,6 +8,8 @@ extern int        tibero_connected;
 static SQLHENV    henv               = SQL_NULL_HENV;
 static SQLHDBC    hdbc               = SQL_NULL_HDBC;
 static SQLHSTMT   hstmt              = SQL_NULL_HSTMT;
+//static SQLCHAR    *insert = "INSERT INTO UK(UK_ID, TITLE) VALUES(?, ?)";
+static SQLCHAR    *insert = "INSERT INTO UK(UK_ID, TITLE, KNOWLEDGE) VALUES(?, ?, XMLType(?))";
 
 
 #define BUFFSIZE   1024
@@ -65,8 +67,6 @@ void disconnect_tibero() {
 void insert_xml(int uk_id, char *title, char *xmltext) {
 
   SQLRETURN   ret    = SQL_SUCCESS;
-  //SQLCHAR    *insert = "INSERT INTO UK(UK_ID, TITLE) VALUES(?, ?)";
-  SQLCHAR    *insert = "INSERT INTO UK(UK_ID, TITLE, KNOWLEDGE) VALUES(?, ?, XMLType(?))";
 
   ret = SQLBindParameter(hstmt,                //   StatementHandle
                          1,                    //   ParameterNumber
@@ -93,7 +93,6 @@ void insert_xml(int uk_id, char *title, char *xmltext) {
                          strlen(title),        //   BufferLength
                          NULL);                //  *StrLen_or_IndPtr
 
-
   ret = SQLBindParameter(hstmt,                //   StatementHandle
                          3,                    //   ParameterNumber
                          SQL_PARAM_INPUT,      //   InputOutputType
@@ -104,7 +103,6 @@ void insert_xml(int uk_id, char *title, char *xmltext) {
                          (SQLCHAR *)xmltext,   //   ParameterValue
                          strlen(xmltext),      //   BufferLength
                          NULL);                //  *StrLen_or_IndPtr
-
 
   ret = SQLPrepare(hstmt, insert, SQL_NTS);
 

@@ -85,7 +85,7 @@ void end(void *data, const char *el) {
 
     // We should show progress
     if(count % PROGRESS_UNIT == 0 && count != 0)
-      fprintf(stderr, "\n%zd x%d rows inserted", count / PROGRESS_UNIT, PROGRESS_UNIT);
+      fprintf(stderr, "\n%zd rows inserted", count);
 
     page_offset_end = XML_GetCurrentByteIndex(parser);
 
