@@ -56,7 +56,7 @@ void disconnect_tibero() {
   ret = SQLDisconnect(hdbc);
   ret = SQLFreeHandle(SQL_HANDLE_DBC, hdbc);
   ret = SQLFreeHandle(SQL_HANDLE_ENV, henv);
-  //ret = SQLFreeHandle(?, hstmt);
+  ret = SQLFreeStmt(hstmt, SQL_CLOSE);
 
   // Tibero 6 is disconnected
   tibero_connected = 0;
