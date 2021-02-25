@@ -80,7 +80,7 @@ void insert_xml(int uk_id, char *title, char *xmltext) {
                          NULL);                //  *StrLen_or_IndPtr
 
   DEBUG_INFO("\nPAGE SIZE: %zd", strlen(xmltext));
-  DEBUG_INFO("\n%s\n", xmltext);
+  //DEBUG_INFO("\n--- XML TEXT ---\n%s\n", xmltext);
 
   ret = SQLBindParameter(hstmt,                //   StatementHandle
                          2,                    //   ParameterNumber

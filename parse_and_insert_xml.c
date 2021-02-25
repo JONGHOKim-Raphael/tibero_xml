@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include <stdlib.h>   // exit()
+#include <stdlib.h>   // atol()
 #include <string.h>
 #include <expat.h>
 #include "parse_and_insert_xml.h"
@@ -24,6 +24,9 @@
 #define TITLE_TAGLEN             strlen("<title>")
 #define PAGE                     "page"
 #define PAGE_SUFFIX              "</page>"
+#define TEXT                     "text"
+#define TEXT_ENDTAGLEN           strlen("</text>\n")
+#define BYTES                    "bytes"
 
 
 /* Keep track of the current level in the XML tree */
@@ -34,7 +37,10 @@ static long            prefix_offset_start,
                        page_offset_start,
                        page_offset_end,
                        title_offset_start,
-                       title_offset_end;
+                       title_offset_end,
+                       text_offset_start,
+                       text_offset_end;
+//static long            text_bytes;
 static XML_Parser      parser;
 static char           *xmltext;
 static char           *xml_buff;
@@ -53,18 +59,30 @@ void start(void *data, const char *el, const char **attr) {
 
   if(!strcmp(PAGE, el)) {
     ++count;
+    //text_bytes = 0;
     page_offset_start     = XML_GetCurrentByteIndex(parser);
+    text_offset_start     = page_offset_start;
   }
 
   if(!strcmp(TITLE, el))
     title_offset_start    = XML_GetCurrentByteIndex(parser);
 
+  if(!strcmp(TEXT, el)) {
+    text_offset_start     = XML_GetCurrentByteIndex(parser);
+
+    /*
+    for(i=0; attr[i]; i+=2) {
+      if(!strcmp(BYTES, attr[i])) {
+        printf("\nbytes: %s", attr[i+1]);
+        text_bytes = atol(attr[i+1]);
+      }
+    }
+    */
+  }
 }               /* End of start handler */
 
 
 void end(void *data, const char *el) {
-
-  size_t pagelen;
 
   if(!strcmp(SITEINFO, el)) {
     prefix_offset_end = XML_GetCurrentByteIndex(parser);
@@ -80,8 +98,10 @@ void end(void *data, const char *el) {
   }
 
   if(!strcmp(PAGE, el)) {
-    //  if(count > 300)
-    //  return;
+    if(count > 5) {
+      disconnect_tibero();
+      exit(0);
+    }
 
     // We should show progress
     if(count % PROGRESS_UNIT == 0 && count != 0)
@@ -89,17 +109,36 @@ void end(void *data, const char *el) {
 
     page_offset_end = XML_GetCurrentByteIndex(parser);
 
-    pagelen = page_offset_end - page_offset_start;
+    // If <text> tag does not exist, length of offset should be 0
+    if(page_offset_start > text_offset_end) {
+      text_offset_start   = page_offset_start;
+      text_offset_end     = page_offset_start;
+      goto copy_page_after_text;
+    }
+
+    DEBUG_INFO("\n--- OFFSETS ---");
+    DEBUG_INFO("\npage_offset_start: %ld", page_offset_start);
+    DEBUG_INFO("\ntext_offset_start: %ld", text_offset_start);
+    DEBUG_INFO("\ntext_offset_end:   %ld", text_offset_end);
+    DEBUG_INFO("\npage_offset_end:   %ld", page_offset_end);
+    DEBUG_INFO("\n---------------\n");
 
     strncpy(page_buff,
             xmltext + page_offset_start,
-            pagelen);
+            text_offset_start - page_offset_start);
+
+copy_page_after_text:
+
+    strncpy(page_buff + text_offset_start - page_offset_start,
+            xmltext + text_offset_end,
+            page_offset_end - text_offset_end);
 
     strcat(xml_buff, PAGE_SUFFIX);
     strcat(xml_buff, MEDIAWIKI_SUFFIX);
 
     // Insert XML using tbCLI
     insert_xml(count, title, xml_buff);
+    //insert_xml(count, title, page_buff);
 
     // Free the page buffer and title buffer
     memset(page_buff, '\0', max_pagelen);
@@ -113,6 +152,10 @@ void end(void *data, const char *el) {
             title_offset_end - title_offset_start - TITLE_TAGLEN);
 
     DEBUG_INFO("\n%zd-th TITLE: %s", count, title);
+  }
+
+  if(!strcmp(TEXT, el)) {
+    text_offset_end = XML_GetCurrentByteIndex(parser) + TEXT_ENDTAGLEN;
   }
 }               /* End of end handler */
 
