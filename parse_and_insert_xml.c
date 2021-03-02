@@ -40,10 +40,8 @@ static long            prefix_offset_start,
                        title_offset_end,
                        text_offset_start,
                        text_offset_end;
-//static long            text_bytes;
 static XML_Parser      parser;
 static char           *xmltext;
-static char           *xml_buff;
 
 
 // Read-only pointers.
@@ -71,6 +69,7 @@ void start(void *data, const char *el, const char **attr) {
     text_offset_start     = XML_GetCurrentByteIndex(parser);
 
     /*
+    long text_bytes;
     for(i=0; attr[i]; i+=2) {
       if(!strcmp(BYTES, attr[i])) {
         printf("\nbytes: %s", attr[i+1]);
@@ -94,7 +93,6 @@ void end(void *data, const char *el) {
             prefixlen);
 
     strcat(prefix_buff, SITEINFO_SUFFIX);
-    page_buff = prefix_buff + strlen(prefix_buff);
   }
 
   if(!strcmp(PAGE, el)) {
@@ -133,12 +131,11 @@ copy_page_after_text:
             xmltext + text_offset_end,
             page_offset_end - text_offset_end);
 
-    strcat(xml_buff, PAGE_SUFFIX);
-    strcat(xml_buff, MEDIAWIKI_SUFFIX);
+    // Complete page tag with </page> suffix
+    strcat(page_buff, PAGE_SUFFIX);
 
     // Insert XML using tbCLI
-    insert_xml(count, title, xml_buff);
-    //insert_xml(count, title, page_buff);
+    insert_xml(count, title, page_buff);
 
     // Free the page buffer and title buffer
     memset(page_buff, '\0', max_pagelen);
@@ -168,11 +165,12 @@ size_t parse_and_insert_xml(const char *filename) {
   xmltext       = malloc(LARGE_BUFFSIZE);
 
   // Initialize static variables
-  xml_buff           = malloc(LARGE_BUFFSIZE);
-  memset(xml_buff, '\0', LARGE_BUFFSIZE);
-  prefix_buff        = xml_buff;
+  prefix_buff        = malloc(LARGE_BUFFSIZE);
+  page_buff          = malloc(LARGE_BUFFSIZE);
+  memset(prefix_buff,  '\0',  LARGE_BUFFSIZE);
+  memset(page_buff,    '\0',  LARGE_BUFFSIZE);
   title              = malloc(BUFFSIZE);
-  memset(title, '\0', BUFFSIZE);
+  memset(title,     '\0',    BUFFSIZE);
 
   parser = XML_ParserCreate(NULL);
   if (parser == NULL) {
@@ -207,7 +205,8 @@ size_t parse_and_insert_xml(const char *filename) {
 
   DEBUG_INFO("\n\nTotal %zd pages\n", count);
   free(xmltext);
-  free(xml_buff);
+  free(prefix_buff);
+  free(page_buff);
   free(title);
 
   return size;
