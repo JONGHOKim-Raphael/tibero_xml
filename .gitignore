@@ -5,6 +5,9 @@ tibero_xml-debug
 # Ignore login information file
 LOGIN_INFO*
 
+# Ignore data directory
+data/
+
 # Ignore test directory
 test/
 
