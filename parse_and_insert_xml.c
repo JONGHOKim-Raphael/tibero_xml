@@ -52,6 +52,7 @@ static char           *prefix_buff, *page_buff, *title;
 void start(void *data, const char *el, const char **attr) {
   int             i;
 
+
   if(!strcmp(MEDIAWIKI, el))
     prefix_offset_start   = XML_GetCurrentByteIndex(parser);
 
@@ -195,7 +196,7 @@ size_t parse_and_insert_xml(const char *filename) {
     fprintf(stderr,
             "Cannot parse %s, file may be too large or not well-formed XML\n",
             filename);
-    return (1);
+    return size;
   }
 
   fclose(f);
