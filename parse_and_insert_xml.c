@@ -96,11 +96,13 @@ void end(void *data, const char *el) {
   }
 
   if(!strcmp(PAGE, el)) {
+#ifdef DEBUG
+    // When we debug, exit early. Just processing 5 pages is enough
     if(count > 5) {
       disconnect_tibero();
       exit(0);
     }
-
+#endif   // DEBUG
     // We should show progress
     if(count % PROGRESS_UNIT == 0 && count != 0)
       fprintf(stderr, "\n%zd rows inserted", count);
